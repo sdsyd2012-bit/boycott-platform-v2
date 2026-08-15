@@ -10,3 +10,6 @@ python manage.py collectstatic --noinput
 
 # ضمان وجود صور المنتجات بعد سحب الكود (إعادة تنزيل أي مفقود من manifest).
 python manage.py ensure_media || true
+
+python manage.py migrate --noinput
+python manage.py loaddata data.json
