@@ -12,4 +12,4 @@ python manage.py collectstatic --noinput
 python manage.py ensure_media || true
 
 python manage.py migrate --noinput
-python manage.py loaddata data.json
+python manage.py loaddata data
