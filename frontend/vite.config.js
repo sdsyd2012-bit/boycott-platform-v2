@@ -11,7 +11,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons.svg'],
       manifest: {
-        name: 'دليل البدائل',
+        name: 'دليل البدائل — مقاطعة واعية وبدائل آمنة',
         short_name: 'دليل البدائل',
         id: '/',
         description: 'Offline-first product boycott checker and alternatives finder.',

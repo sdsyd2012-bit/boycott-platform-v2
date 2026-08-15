@@ -84,7 +84,7 @@ export default function ContributionsPage() {
 
   return (
     <section className="py-12 md:py-16">
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="shell">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-500">

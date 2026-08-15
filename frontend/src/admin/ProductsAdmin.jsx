@@ -28,9 +28,11 @@ import {
   TrashIcon,
 } from '../components/icons.jsx'
 import { syncNow } from '../services/syncService.js'
+import { ProductImage } from '../components/LocalImage.jsx'
 
 const emptyForm = {
   barcode: '',
+  barcodes: '',
   name: '',
   brand_name: '',
   category: '',
@@ -44,6 +46,7 @@ const emptyForm = {
 function productToForm(product) {
   return {
     barcode: product.barcode || '',
+    barcodes: Array.isArray(product.barcodes) ? product.barcodes.join(', ') : '',
     name: product.name || '',
     brand_name: product.brand_name || '',
     category: product.category || '',
@@ -60,8 +63,13 @@ function formToPayload(form) {
     .split('\n')
     .map((item) => item.trim())
     .filter(Boolean)
+  const barcodes = form.barcodes
+    .split(/[,،\n]/)
+    .map((item) => item.trim())
+    .filter(Boolean)
   return {
     barcode: form.barcode.trim(),
+    barcodes,
     name: form.name.trim(),
     brand_name: form.brand_name.trim(),
     category: form.category || null,
@@ -112,11 +120,13 @@ export default function ProductsAdmin() {
     if (!products) return []
     const query = search.trim().toLowerCase()
     return products.filter((product) => {
+      const barcodes = Array.isArray(product.barcodes) ? product.barcodes : []
       const matchesSearch =
         !query ||
         product.name.toLowerCase().includes(query) ||
         product.brand_name.toLowerCase().includes(query) ||
-        product.barcode.toLowerCase().includes(query)
+        product.barcode.toLowerCase().includes(query) ||
+        barcodes.some((code) => code.toLowerCase().includes(query))
       const matchesStatus =
         statusFilter === 'all' ||
         (statusFilter === 'boycotted' && product.is_boycotted) ||
@@ -305,17 +315,14 @@ export default function ProductsAdmin() {
                 <tr key={product.id} className="transition hover:bg-slate-50 dark:hover:bg-white/5">
                   <Td>
                     <div className="flex items-center gap-3">
-                      {product.image_url ? (
-                        <img
-                          src={product.image_url}
-                          alt={product.name}
-                          className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 object-contain p-1 dark:border-white/10"
-                        />
-                      ) : (
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400 dark:bg-white/5">
-                          <ImageIcon className="h-5 w-5" />
-                        </span>
-                      )}
+                      <ProductImage
+                        product={product}
+                        alt={product.name}
+                        imgClassName="h-10 w-10 shrink-0 rounded-lg border border-slate-200 object-contain p-1 dark:border-white/10"
+                        fallbackClassName="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400 dark:bg-white/5"
+                      >
+                        <ImageIcon className="h-5 w-5" />
+                      </ProductImage>
                       <div>
                         <p className="font-bold text-slate-900 dark:text-white">{product.name}</p>
                         {product.brand_name && (
@@ -329,7 +336,11 @@ export default function ProductsAdmin() {
                       </div>
                     </div>
                   </Td>
-                  <Td className="font-mono text-xs">{product.barcode}</Td>
+                  <Td className="font-mono text-xs">
+                    {Array.isArray(product.barcodes) && product.barcodes[0]
+                      ? product.barcodes[0]
+                      : product.barcode}
+                  </Td>
                   <Td>{categoryById[product.category] || '—'}</Td>
                   <Td>
                     <div className="flex flex-wrap gap-1.5">
@@ -395,6 +406,17 @@ export default function ProductsAdmin() {
               </Field>
               <Field label="الباركود *">
                 <TextInput value={form.barcode} onChange={set('barcode')} placeholder="مثال: 6291041500213" />
+              </Field>
+              <Field
+                label="باركودات إضافية"
+                hint="اربط المنتج بأرقام الباركود الحقيقية المطبوعة على العبوة، مفصولة بفواصل."
+              >
+                <TextInput
+                  value={form.barcodes}
+                  onChange={set('barcodes')}
+                  placeholder="مثال: 5449000000996, 5449000131805"
+                  dir="ltr"
+                />
               </Field>
               <Field label="الصنف">
                 <Select value={form.category} onChange={set('category')}>

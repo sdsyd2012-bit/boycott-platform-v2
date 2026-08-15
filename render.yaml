@@ -1,49 +1,60 @@
+# Render Blueprint — النشر على الاستضافة المجانية.
+#
+# قبل النشر عدّل القيم بين <...>:
+#   <API_HOST>       = نطاق الـ Backend النهائي (مثل: boycott-api.onrender.com)
+#   <FRONTEND_URL>   = نطاق الـ Frontend النهائي (مثل: https://boycott-app.onrender.com)
+#
+# مهمة جداً بعد النشر (خطوة واحدة يدوياً):
+#   - افتح إعدادات خدمة boycott-frontend على لوحة Render → Redirects/Rewrites
+#     وأضف قاعدة Rewrite: المصدر /* إلى /index.html
+#     حتى تعمل روابط React Router عند فتح/تحديث أي صفحة مباشرة (مثل /product/...).
+#     (ملف frontend/_redirects و frontend/vercel.json يغطيان Netlify/Cloudflare/Vercel.)
+#
+# ملاحظة: قاعدة بيانات PostgreSQL المجانية في Render تنتهي بعد 30 يوماً.
+# للبقاء مجانياً إلى الأبد استخدم DATABASE_URL خارجياً (Neon/Supabase).
+
 databases:
-  - name: dalil-platform-db
+  - name: boycott-db
     plan: free
-    # بديل: عند استخدام Neon، احذف قاعدة البيانات هذه
-    # واضبط متغيرات POSTGRES_* أدناه من قيم اتصال Neon يدوياً.
+    databaseName: boycott
+    user: boycott
 
 services:
   - type: web
-    name: dalil-platform-api
+    name: boycott-api
     runtime: python
     plan: free
-    buildCommand: |
-      pip install -r requirements.txt
-      python manage.py collectstatic --noinput
-    releaseCommand: python manage.py migrate
-    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --access-logfile -
+    buildCommand: "./build.sh"
+    startCommand: >-
+      gunicorn config.wsgi:application
+      --workers 2 --threads 4
+      --bind 0.0.0.0:$PORT
+      --timeout 60 --access-logfile -
+    preDeployCommand: "python manage.py migrate --noinput"
     healthCheckPath: /api/v1/sync/
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.12"
       - key: DJANGO_SECRET_KEY
         generateValue: true
       - key: DJANGO_DEBUG
         value: "False"
       - key: DJANGO_ALLOWED_HOSTS
-        value: "dalil-platform-api.onrender.com,localhost,127.0.0.1"
-      - key: DJANGO_CORS_ALLOWED_ORIGINS
-        # غيّر الرابط إلى عنوان تطبيق الواجهة الأمامية بعد نشره على Netlify.
-        value: "https://dalil-platform.netlify.app"
-      - key: POSTGRES_DB
+        value: "<API_HOST>"
+      - key: DJANGO_CORS_ORIGINS
+        value: "<FRONTEND_URL>"
+      - key: DATABASE_URL
         fromDatabase:
-          name: dalil-platform-db
-          property: database
-      - key: POSTGRES_USER
-        fromDatabase:
-          name: dalil-platform-db
-          property: user
-      - key: POSTGRES_PASSWORD
-        fromDatabase:
-          name: dalil-platform-db
-          property: password
-      - key: POSTGRES_HOST
-        fromDatabase:
-          name: dalil-platform-db
-          property: host
-      - key: POSTGRES_PORT
-        fromDatabase:
-          name: dalil-platform-db
-          property: port
-      - key: POSTGRES_SSL_MODE
-        value: "prefer"
+          name: boycott-db
+          property: connectionString
+
+  - type: web
+    name: boycott-frontend
+    runtime: static
+    rootDir: frontend
+    plan: free
+    buildCommand: "npm ci && npm run build"
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: "https://<API_HOST>/api/v1"

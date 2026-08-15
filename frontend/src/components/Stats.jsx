@@ -53,6 +53,7 @@ function StatCard({ value, start, label, icon: Icon, color }) {
 export default function Stats({ stats }) {
   const ref = useRef(null)
   const [inView, setInView] = useState(false)
+  const isEmpty = !stats || (!stats.total && !stats.avoid && !stats.support && !stats.alternatives)
 
   useEffect(() => {
     const el = ref.current
@@ -72,12 +73,12 @@ export default function Stats({ stats }) {
 
   return (
     <section id="stats" className="scroll-mt-20 py-16 md:py-24">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="shell">
         <SectionHeading
           center
           kicker="إحصائيات المنصة"
           title="أرقام دقيقة تُجسّد أثر المقاطعة"
-          description="يُحدث الدليل باستمرار بالاعتماد على التوثيق الحقوقي ومشاركة المجتمع الفاعلة."
+          description="يُحدَّث الدليل باستمرار بالاعتماد على التوثيق الحقوقي ومشاركة المجتمع الفاعلة."
         />
         <div
           ref={ref}
@@ -86,7 +87,7 @@ export default function Stats({ stats }) {
           {STAT_ITEMS.map((item) => (
             <StatCard
               key={item.key}
-              value={stats[item.key]}
+              value={stats?.[item.key]}
               start={inView}
               label={item.label}
               icon={item.icon}
@@ -94,6 +95,12 @@ export default function Stats({ stats }) {
             />
           ))}
         </div>
+        {isEmpty && (
+          <p className="mx-auto mt-8 max-w-md rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-4 text-center text-sm leading-relaxed text-slate-500 dark:border-white/15 dark:bg-slate-900/50 dark:text-slate-400">
+            المنصة بدأت للتو — لا توجد أرقام بعد. أضف أول منتج من لوحة التحكم أو شارك
+            باقتراحك ليكبر العدد.
+          </p>
+        )}
       </div>
     </section>
   )

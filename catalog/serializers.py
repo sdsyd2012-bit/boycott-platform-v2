@@ -55,6 +55,7 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'barcode',
+            'barcodes',
             'name',
             'brand_name',
             'is_boycotted',

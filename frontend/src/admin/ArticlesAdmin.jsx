@@ -26,6 +26,8 @@ import {
   TrashIcon,
 } from '../components/icons.jsx'
 import { syncNow } from '../services/syncService.js'
+import LocalImage from '../components/LocalImage.jsx'
+import { articleOwnerId } from '../services/imageService.js'
 
 const ARABIC_TO_LATIN = {
   أ: 'a', إ: 'a', آ: 'a', ا: 'a',
@@ -237,17 +239,15 @@ export default function ArticlesAdmin() {
                 <tr key={article.id} className="transition hover:bg-slate-50 dark:hover:bg-white/5">
                   <Td>
                     <div className="flex items-center gap-3">
-                      {article.cover_url ? (
-                        <img
-                          src={article.cover_url}
-                          alt={article.title}
-                          className="h-10 w-14 shrink-0 rounded-lg border border-slate-200 object-cover dark:border-white/10"
-                        />
-                      ) : (
-                        <span className="flex h-10 w-14 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400 dark:bg-white/5">
-                          <FileTextIcon className="h-5 w-5" />
-                        </span>
-                      )}
+                      <LocalImage
+                        ownerId={articleOwnerId(article.id)}
+                        sourceUrl={article.cover_url}
+                        alt={article.title}
+                        imgClassName="h-10 w-14 shrink-0 rounded-lg border border-slate-200 object-cover dark:border-white/10"
+                        fallbackClassName="flex h-10 w-14 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400 dark:bg-white/5"
+                      >
+                        <FileTextIcon className="h-5 w-5" />
+                      </LocalImage>
                       <p className="max-w-[220px] font-bold text-slate-900 dark:text-white">
                         {article.title}
                       </p>

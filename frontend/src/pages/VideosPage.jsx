@@ -2,6 +2,31 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database.js'
 import { ClapperboardIcon, SearchIcon, PlayIcon, CloseIcon } from '../components/icons.jsx'
+import LocalImage from '../components/LocalImage.jsx'
+import { videoOwnerId } from '../services/imageService.js'
+
+const toVideoId = (url) => {
+  if (!url) return ''
+  const value = String(url)
+  const watch = value.match(/youtube\.com\/watch\?v=([\w-]{11})/)
+  if (watch) return watch[1]
+  const cleaned = value.split('?')[0].split('#')[0]
+  const short = cleaned.match(/youtube\.com\/(?:shorts|embed|live)\/([\w-]{11})/)
+  if (short) return short[1]
+  const youtuBe = cleaned.match(/youtu\.be\/([\w-]{11})/)
+  if (youtuBe) return youtuBe[1]
+  return ''
+}
+
+const toEmbedUrl = (url) => {
+  const id = toVideoId(url)
+  return id ? `https://www.youtube.com/embed/${id}` : url
+}
+
+const toThumbnailUrl = (url) => {
+  const id = toVideoId(url)
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : ''
+}
 
 export default function VideosPage() {
   const videos = useLiveQuery(
@@ -18,7 +43,7 @@ export default function VideosPage() {
 
   return (
     <section className="py-12 md:py-16">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="shell">
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
@@ -66,7 +91,7 @@ export default function VideosPage() {
             </p>
           </div>
         ) : (
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {filtered.map((video) => (
               <div
                 key={video.id}
@@ -74,18 +99,16 @@ export default function VideosPage() {
                 className="group cursor-pointer overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-white/10 dark:bg-slate-900/70"
               >
                 {/* Thumbnail Container */}
-                <div className="relative aspect-video w-full overflow-hidden bg-slate-950">
-                  {video.thumbnail_url ? (
-                    <img
-                      src={video.thumbnail_url}
-                      alt={video.title}
-                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-slate-900 text-slate-600">
-                      <ClapperboardIcon className="h-12 w-12" />
-                    </div>
-                  )}
+                <div className="relative aspect-video w-full overflow-hidden bg-slate-950 transition-colors duration-300 group-hover:bg-rose-500/20">
+                  <LocalImage
+                    ownerId={videoOwnerId(video.id)}
+                    sourceUrl={video.thumbnail_url || toThumbnailUrl(video.embed_url)}
+                    alt={video.title}
+                    imgClassName="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                    fallbackClassName="flex h-full w-full items-center justify-center bg-slate-900 text-slate-600"
+                  >
+                    <ClapperboardIcon className="h-12 w-12" />
+                  </LocalImage>
 
                   {/* Play Overlay */}
                   <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 transition group-hover:bg-slate-950/20">
@@ -129,7 +152,7 @@ export default function VideosPage() {
               </div>
               <div className="relative aspect-video w-full bg-black">
                 <iframe
-                  src={activeVideo.embed_url}
+                  src={toEmbedUrl(activeVideo.embed_url)}
                   title={activeVideo.title}
                   className="absolute inset-0 h-full w-full border-0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

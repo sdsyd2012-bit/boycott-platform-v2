@@ -8,8 +8,7 @@ export const NAV_LINKS = [
 
 export const HERO_SLIDES = [
   {
-    image:
-      'https://images.unsplash.com/photo-1542743408-5fdf746fd87d?w=1600&q=80&auto=format&fit=crop',
+    image: '/hero/hero-1.jpg',
     tag: 'منصة توعوية مستقلة',
     title: 'هل تريد أن تقف مع إخوانك؟ هل تريد أن تساندهم؟',
     sub: 'كل قرار شراء هو صوت في معركة الوعي. ابدأ اليوم بقائمة مقاطعة موثّقة وبدائل وطنية آمنة.',
@@ -17,8 +16,7 @@ export const HERO_SLIDES = [
     secondary: { label: 'اكتشف البدائل الآمنة', href: '#stats' },
   },
   {
-    image:
-      'https://images.unsplash.com/photo-1614517453351-6c1522fc7a56?w=1600&q=80&auto=format&fit=crop',
+    image: '/hero/hero-2.jpg',
     tag: 'مقاطعة قائمة على المعرفة',
     title: 'قاطِع بوعي واختر ما يليق بقضيتك',
     sub: 'مئات الشركات والعلامات الموثّقة تحتاج قراراً واحداً منك: لا تشترِ، واختر البديل الوطني الآمن.',
@@ -26,8 +24,7 @@ export const HERO_SLIDES = [
     secondary: { label: 'تعرّف على الأرقام', href: '#stats' },
   },
   {
-    image:
-      'https://images.unsplash.com/photo-1552423310-ba74b8de5e6f?w=1600&q=80&auto=format&fit=crop',
+    image: '/hero/hero-3.jpg',
     tag: 'قوة الأثر الجماعي',
     title: 'قرارك الصغير يحدث تغييراً عظيماً',
     sub: 'المقاطعة الفعّالة تبدأ بمعرفة دقيقة. استكشف القائمة الكاملة وساهِم في إثرائها باقتراحاتك.',

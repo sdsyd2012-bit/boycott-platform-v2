@@ -25,6 +25,8 @@ import {
   TrashIcon,
 } from '../components/icons.jsx'
 import { syncNow } from '../services/syncService.js'
+import LocalImage from '../components/LocalImage.jsx'
+import { videoOwnerId } from '../services/imageService.js'
 
 const emptyForm = { title: '', embed_url: '', thumbnail_url: '' }
 
@@ -191,17 +193,15 @@ export default function VideosAdmin() {
                 <tr key={video.id} className="transition hover:bg-slate-50 dark:hover:bg-white/5">
                   <Td>
                     <div className="flex items-center gap-3">
-                      {video.thumbnail_url ? (
-                        <img
-                          src={video.thumbnail_url}
-                          alt={video.title}
-                          className="h-10 w-16 shrink-0 rounded-lg border border-slate-200 object-cover dark:border-white/10"
-                        />
-                      ) : (
-                        <span className="flex h-10 w-16 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400 dark:bg-white/5">
-                          <ClapperboardIcon className="h-5 w-5" />
-                        </span>
-                      )}
+                      <LocalImage
+                        ownerId={videoOwnerId(video.id)}
+                        sourceUrl={video.thumbnail_url}
+                        alt={video.title}
+                        imgClassName="h-10 w-16 shrink-0 rounded-lg border border-slate-200 object-cover dark:border-white/10"
+                        fallbackClassName="flex h-10 w-16 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400 dark:bg-white/5"
+                      >
+                        <ClapperboardIcon className="h-5 w-5" />
+                      </LocalImage>
                       <p className="max-w-[260px] font-bold text-slate-900 dark:text-white">
                         {video.title}
                       </p>

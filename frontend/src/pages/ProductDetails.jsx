@@ -5,6 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db/database.js'
 import { cleanDescription, shortDescription, toBrand } from '../lib/brand.js'
 import BrandCard, { TONES, toneIndex } from '../components/BrandCard.jsx'
+import { ProductImage } from '../components/LocalImage.jsx'
 import { useToast } from '../admin/Toast.jsx'
 import { pushDiscoveries } from '../services/syncService.js'
 import {
@@ -44,7 +45,13 @@ export default function ProductDetails() {
 
   const product = useMemo(() => {
     if (!products) return null
-    return products.find((item) => item.barcode === barcode) || undefined
+    return (
+      products.find((item) => item.barcode === barcode) ||
+      products.find(
+        (item) => Array.isArray(item.barcodes) && item.barcodes.includes(barcode),
+      ) ||
+      undefined
+    )
   }, [products, barcode])
 
   const categoryName = product?.category ? categoryById.get(product.category)?.name : ''
@@ -345,121 +352,153 @@ export default function ProductDetails() {
   const boycotted = product.is_boycotted
   const description = cleanDescription(product.description)
 
-  return (
-    <section className="py-12 md:py-16">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 transition hover:text-emerald-400 dark:text-slate-400"
-        >
-          <ArrowRightIcon className="h-4 w-4" />
-          عودة
-        </button>
+  const accents = boycotted
+    ? {
+        card: 'border-rose-200/70 bg-gradient-to-br from-rose-50 via-white to-white dark:border-rose-500/20 dark:from-rose-950/40 dark:via-slate-950 dark:to-slate-950',
+        badge: 'bg-rose-600 text-white',
+        panel: 'border-rose-500/20 bg-rose-500/10',
+        panelLabel: 'text-rose-600 dark:text-rose-300',
+        watermark: 'text-rose-600/10 dark:text-rose-500/10',
+      }
+    : {
+        card: 'border-emerald-200/70 bg-gradient-to-br from-emerald-50 via-white to-white dark:border-emerald-500/20 dark:from-emerald-950/40 dark:via-slate-950 dark:to-slate-950',
+        badge: 'bg-emerald-600 text-white',
+        panel: 'border-emerald-500/20 bg-emerald-500/10',
+        panelLabel: 'text-emerald-600 dark:text-emerald-300',
+        watermark: 'text-emerald-500/10 dark:text-emerald-400/10',
+      }
 
-        <div className="mt-5 overflow-hidden rounded-2xl border border-white/10 bg-slate-900/80 shadow-sm backdrop-blur-md">
+  const primaryBarcode = product.barcodes?.[0] || product.barcode
+
+  return (
+    <section className="py-10 md:py-14">
+      <div className="shell">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-500">
+          <Link to="/" className="transition hover:text-emerald-600 dark:hover:text-emerald-400">
+            الرئيسية
+          </Link>
+          <span aria-hidden>/</span>
+          <Link to="/products" className="transition hover:text-emerald-600 dark:hover:text-emerald-400">
+            المنتجات
+          </Link>
+          <span aria-hidden>/</span>
+          <span className="font-semibold text-slate-600 dark:text-slate-300">{product.name}</span>
+        </nav>
+
+        {/* Status Hero Card */}
+        <div className={`mt-6 overflow-hidden rounded-[2rem] border shadow-sm ${accents.card}`}>
           <div className="grid lg:grid-cols-2">
-            <div className="relative flex min-h-64 items-center justify-center border-b border-white/10 bg-slate-800/60 p-10 lg:border-b-0 lg:border-l">
-              {product.image_url ? (
-                <img
-                  src={product.image_url}
-                  alt={product.name}
-                  className="max-h-48 w-auto max-w-full object-contain"
-                />
-              ) : (
-                <span className="flex h-24 w-24 items-center justify-center rounded-full bg-white/5 text-slate-500">
-                  <TagIcon className="h-12 w-12" />
-                </span>
-              )}
-              {boycotted && (
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 flex items-center justify-center"
-                >
-                  <BanIcon className="h-40 w-40 text-rose-600/20" />
-                </span>
-              )}
+            {/* Image Panel */}
+            <div className="relative flex min-h-72 items-center justify-center overflow-hidden bg-white/40 p-10 lg:min-h-96 lg:border-l dark:bg-black/10">
+              <span
+                aria-hidden
+                className={`pointer-events-none absolute inset-0 flex items-center justify-center ${accents.watermark}`}
+              >
+                {boycotted ? <BanIcon className="h-64 w-64" /> : <CheckIcon className="h-64 w-64" />}
+              </span>
+              <ProductImage
+                product={product}
+                alt={product.name}
+                imgClassName="relative z-10 max-h-56 w-auto max-w-full object-contain drop-shadow-xl"
+                fallbackClassName="relative z-10 flex h-24 w-24 items-center justify-center rounded-3xl bg-white/80 shadow-lg ring-1 ring-slate-200/70 dark:bg-slate-900/80 dark:ring-white/10"
+              >
+                <TagIcon className="h-12 w-12 text-slate-400" />
+              </ProductImage>
             </div>
 
-            <div className="p-6 md:p-9">
+            {/* Content Panel */}
+            <div className="p-8 md:p-12">
               <div className="flex flex-wrap items-center gap-2">
-                {boycotted ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/15 px-3.5 py-1.5 text-xs font-bold text-rose-300">
-                    <BanIcon className="h-4 w-4" />
-                    مقاطع
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3.5 py-1.5 text-xs font-bold text-emerald-300">
-                    <CheckIcon className="h-4 w-4" />
-                    بديل آمن
-                  </span>
-                )}
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold shadow-sm ${accents.badge}`}
+                >
+                  {boycotted ? <BanIcon className="h-4 w-4" /> : <CheckIcon className="h-4 w-4" />}
+                  {boycotted ? 'مقاطع' : 'بديل آمن'}
+                </span>
                 {categoryName && (
-                  <span className={`rounded-full px-3 py-1.5 text-xs font-bold ${TONES[toneIndex(categoryName)]}`}>
+                  <span className={`rounded-full px-3.5 py-1.5 text-xs font-bold ${TONES[toneIndex(categoryName)]}`}>
                     {categoryName}
                   </span>
                 )}
                 {product.is_user_contributed && product.status === 'pending' && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-500/30 bg-orange-500/15 px-3.5 py-1.5 text-xs font-bold text-orange-400">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-500/30 bg-orange-500/15 px-3.5 py-1.5 text-xs font-bold text-orange-500 dark:text-orange-400">
                     ⏳ قيد المراجعة
                   </span>
                 )}
                 {product.is_user_contributed && product.status === 'approved' && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3.5 py-1.5 text-xs font-bold text-emerald-300">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3.5 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-300">
                     ✅ تم الاعتماد
                   </span>
                 )}
                 {product.is_user_contributed && product.status === 'rejected' && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/15 px-3.5 py-1.5 text-xs font-bold text-rose-300">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/15 px-3.5 py-1.5 text-xs font-bold text-rose-600 dark:text-rose-300">
                     ❌ مرفوض
                   </span>
                 )}
               </div>
 
-              <h1 className="mt-5 text-3xl font-bold tracking-tight text-white md:text-4xl">
+              <h1
+                className={`mt-6 text-3xl font-black leading-tight tracking-tight md:text-5xl ${
+                  boycotted ? 'text-rose-900 dark:text-rose-200' : 'text-emerald-900 dark:text-emerald-200'
+                }`}
+              >
                 {product.name}
               </h1>
               {product.brand_name && product.brand_name !== product.name && (
-                <p className="mt-2 text-lg text-slate-400">{product.brand_name}</p>
+                <p className="mt-3 text-lg font-semibold text-slate-600 dark:text-slate-300">
+                  {product.brand_name}
+                </p>
               )}
 
-              {boycotted ? (
-                <div className="mt-6 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4">
-                  <p className="text-xs font-bold tracking-wide text-rose-300">
-                    لماذا يُقاطَع هذا المنتج؟
-                  </p>
-                  <p className="mt-2 text-sm leading-relaxed text-rose-200">
-                    {shortDescription(product.reason) || 'يدعم الاحتلال الصهيوني'}
-                  </p>
-                </div>
-              ) : (
-                <div className="mt-6 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-                  <p className="text-xs font-bold tracking-wide text-emerald-300">
-                    لماذا يُعدّ هذا المنتج بديلاً آمناً؟
-                  </p>
-                  <p className="mt-2 text-sm leading-relaxed text-emerald-200">
-                    {shortDescription(product.reason) || 'علامة محلية آمنة لا تدعم الاحتلال'}
-                  </p>
-                </div>
-              )}
+              <div className={`mt-7 rounded-2xl border p-5 ${accents.panel}`}>
+                <p className={`flex items-center gap-1.5 text-xs font-bold tracking-wide ${accents.panelLabel}`}>
+                  {boycotted ? <BanIcon className="h-4 w-4" /> : <CheckIcon className="h-4 w-4" />}
+                  {boycotted ? 'لماذا نقاطع هذا المنتج؟' : 'لماذا يُعدّ بديلاً آمناً؟'}
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                  {shortDescription(product.reason) ||
+                    (boycotted ? 'يدعم الاحتلال الصهيوني' : 'علامة محلية آمنة لا تدعم الاحتلال')}
+                </p>
+              </div>
 
-              {description && description !== cleanDescription(product.reason) && (
-                <div className="mt-5">
-                  <h2 className="text-sm font-bold text-white">نبذة موثّقة</h2>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-300">{description}</p>
-                </div>
+              {primaryBarcode && (
+                <p className="mt-6 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                  <TagIcon className="h-4 w-4" />
+                  الباركود:
+                  <code className="font-mono font-bold tracking-wider text-slate-700 dark:text-slate-200" dir="ltr">
+                    {primaryBarcode}
+                  </code>
+                </p>
               )}
             </div>
           </div>
         </div>
 
-        <div className="mt-14">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            {alternativesTitle}
-          </h2>
+        {/* Verified Description */}
+        {description && description !== cleanDescription(product.reason) && (
+          <div className="mt-8 rounded-3xl border border-slate-200/80 bg-white p-8 shadow-sm dark:border-white/10 dark:bg-slate-900">
+            <div className="flex items-center gap-2">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <CheckIcon className="h-4 w-4" />
+              </span>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">نبذة موثّقة</h2>
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{description}</p>
+          </div>
+        )}
+
+        {/* Alternatives */}
+        <div className="mt-12 md:mt-16">
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white md:text-3xl">
+              {alternativesTitle}
+            </h2>
+            <span className="h-px flex-1 bg-slate-200 dark:bg-white/10" />
+          </div>
           {alternatives.length > 0 ? (
-            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
-              {alternatives.slice(0, 5).map((brand) => (
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5 xl:grid-cols-6">
+              {alternatives.slice(0, 6).map((brand) => (
                 <BrandCard key={brand.id} brand={brand} />
               ))}
             </div>

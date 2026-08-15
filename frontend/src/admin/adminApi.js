@@ -1,7 +1,6 @@
 import axios from 'axios'
 
-const env = import.meta?.env ?? {}
-export const API_BASE_URL = env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1'
+import { API_BASE_URL } from '../config/api.js'
 
 const TOKEN_KEY = 'admin_token'
 const USER_KEY = 'admin_user'

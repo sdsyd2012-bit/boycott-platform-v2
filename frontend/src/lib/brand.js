@@ -25,6 +25,7 @@ export const resolveAlternatives = (brand, brandsById) => {
 
 export function toBrand(product, categoryName = '') {
   const isAvoid = Boolean(product.is_boycotted)
+  const barcodes = Array.isArray(product.barcodes) ? product.barcodes : []
   return {
     id: product.barcode,
     name: product.brand_name || product.name,
@@ -39,5 +40,8 @@ export function toBrand(product, categoryName = '') {
       : '',
     logo_url: product.image_url || '',
     reasons: product.reason ? [product.reason] : [],
+    barcode: product.barcode,
+    barcodes,
+    barcode_label: barcodes[0] || product.barcode,
   }
 }

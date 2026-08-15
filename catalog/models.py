@@ -3,7 +3,7 @@ from django.db import models
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
-    icon = models.CharField(max_length=255, blank=True, null=True)
+    icon = models.CharField(max_length=1000, blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -17,6 +17,7 @@ class Category(models.Model):
 
 class Product(models.Model):
     barcode = models.CharField(max_length=100, unique=True, db_index=True)
+    barcodes = models.JSONField(default=list, blank=True)
     name = models.CharField(max_length=255)
     brand_name = models.CharField(max_length=255, blank=True)
     is_boycotted = models.BooleanField(default=True)

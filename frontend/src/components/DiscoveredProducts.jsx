@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { db } from '../db/database.js'
 import { shortDescription } from '../lib/brand.js'
 import { BanIcon, CheckIcon, ClockIcon, ImageIcon } from './icons.jsx'
+import { ProductImage } from './LocalImage.jsx'
 
 export default function DiscoveredProducts() {
   const products = useLiveQuery(
@@ -40,7 +41,7 @@ export default function DiscoveredProducts() {
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-6">
       {sorted.map((product) => {
         const status = product.is_boycotted ? 'avoid' : 'safe'
         return (
@@ -50,17 +51,14 @@ export default function DiscoveredProducts() {
             className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-slate-900/70"
           >
             <div className="relative flex h-28 items-center justify-center border-b border-slate-200/70 bg-slate-50 p-4 dark:border-white/10 dark:bg-slate-800/60">
-              {product.image_url ? (
-                <img
-                  src={product.image_url}
-                  alt={product.name}
-                  className="max-h-20 w-auto max-w-full object-contain"
-                />
-              ) : (
-                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-200 text-slate-400 dark:bg-white/5">
-                  <ImageIcon className="h-6 w-6" />
-                </span>
-              )}
+              <ProductImage
+                product={product}
+                alt={product.name}
+                imgClassName="max-h-20 w-auto max-w-full object-contain"
+                fallbackClassName="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-200 text-slate-400 dark:bg-white/5"
+              >
+                <ImageIcon className="h-6 w-6" />
+              </ProductImage>
               <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-orange-500 px-2.5 py-0.5 text-[10px] font-bold text-white">
                 <ClockIcon className="h-3 w-3" />
                 قيد المراجعة

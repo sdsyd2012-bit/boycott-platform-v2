@@ -2,11 +2,13 @@ import json
 import re
 from collections import Counter
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from catalog.models import Category, Product
 
-DEFAULT_DATA_FILE = '/home/kali/Desktop/مجلد البيانات/data.json'
+# ملف الاستيراد الافتراضي: ضعه في جذر المشروع (data.json) — لا يعتمد على أي مسار محلي.
+DEFAULT_DATA_FILE = settings.BASE_DIR / 'data.json'
 
 CATEGORY_MAP = {
     'technology': 'تقنية',
@@ -178,8 +180,12 @@ class Command(BaseCommand):
     help = 'استيراد قائمة العلامات التجارية من ملف data.json'
 
     def add_arguments(self, parser):
-        parser.add_argument('data_file', nargs='?', default=DEFAULT_DATA_FILE)
-        parser.add_argument('--backup', default='/tmp/opencode/old_data_backup.json')
+        parser.add_argument('data_file', nargs='?', default=str(DEFAULT_DATA_FILE))
+        parser.add_argument(
+            '--backup',
+            default=str(settings.BASE_DIR / 'data_backup.json'),
+            help='مسار ملف النسخة الاحتياطية (الافتراضي: data_backup.json في جذر المشروع).',
+        )
 
     def handle(self, *args, **options):
         with open(options['data_file'], encoding='utf-8') as file:

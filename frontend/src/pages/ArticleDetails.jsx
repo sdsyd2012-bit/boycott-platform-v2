@@ -4,6 +4,8 @@ import { useLiveQuery } from 'dexie-react-hooks'
 
 import { db } from '../db/database.js'
 import { ArrowRightIcon, FileTextIcon } from '../components/icons.jsx'
+import LocalImage from '../components/LocalImage.jsx'
+import { articleOwnerId } from '../services/imageService.js'
 
 function formatDate(value) {
   if (!value) return ''
@@ -77,11 +79,15 @@ export default function ArticleDetails() {
 
         <article className="mt-6">
           {article.cover_url && (
-            <img
-              src={article.cover_url}
+            <LocalImage
+              ownerId={articleOwnerId(article.id)}
+              sourceUrl={article.cover_url}
               alt={article.title}
-              className="max-h-80 w-full rounded-2xl border border-slate-200 object-cover dark:border-white/10"
-            />
+              imgClassName="max-h-80 w-full rounded-2xl border border-slate-200 object-cover dark:border-white/10"
+              fallbackClassName="flex max-h-80 w-full items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-300 dark:border-white/10 dark:bg-slate-900"
+            >
+              <FileTextIcon className="h-16 w-16" />
+            </LocalImage>
           )}
 
           <div className="mt-8">

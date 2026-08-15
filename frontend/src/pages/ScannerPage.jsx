@@ -45,6 +45,82 @@ function mapCameraError(error) {
   return 'تعذّر تشغيل الكاميرا لسبب غير متوقع.'
 }
 
+const loadImageElement = (file) =>
+  new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      resolve(img)
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('تعذّر تحميل الصورة'))
+    }
+    img.src = url
+  })
+
+const canvasToFile = (canvas, name) =>
+  new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) {
+        resolve(new File([blob], name, { type: 'image/png' }))
+      } else {
+        reject(new Error('تعذّر إنشاء الصورة المعالجة'))
+      }
+    }, 'image/png')
+  })
+
+// توحيد مقاس الصورة قبل الفحص: تكبير الصور الصغيرة وتصغير الكبيرة جداً،
+// حتى يتسنى للمفكك قراءة الباركود بوضوح أكبر.
+const prepareImageFile = async (file) => {
+  const img = await loadImageElement(file)
+  const srcW = img.naturalWidth || img.width || 0
+  const srcH = img.naturalHeight || img.height || 0
+  const longest = Math.max(srcW, srcH)
+  const target = longest > 1600 ? 1600 : longest < 640 ? 640 : longest
+  const scale = target / longest
+  const width = Math.max(1, Math.round(srcW * scale))
+  const height = Math.max(1, Math.round(srcH * scale))
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, width, height)
+  ctx.drawImage(img, 0, 0, width, height)
+  return canvasToFile(canvas, 'barcode-prepared.png')
+}
+
+// محاولة ثانية: قص منطقة الوسط وتكبيرها ثم الفحص، تنجح غالباً
+// عندما يكون الباركود صغيراً داخل الصورة الكبيرة.
+const prepareZoomedFile = async (file, region = 0.5, zoom = 2) => {
+  const img = await loadImageElement(file)
+  const srcW = img.naturalWidth || img.width || 0
+  const srcH = img.naturalHeight || img.height || 0
+  const cropW = Math.round(srcW * region)
+  const cropH = Math.round(srcH * region)
+  const sx = Math.round((srcW - cropW) / 2)
+  const sy = Math.round((srcH - cropH) / 2)
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.min(cropW * zoom, 2000)
+  canvas.height = Math.min(cropH * zoom, 2000)
+  const ctx = canvas.getContext('2d')
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+  ctx.drawImage(img, sx, sy, cropW, cropH, 0, 0, canvas.width, canvas.height)
+  return canvasToFile(canvas, 'barcode-zoomed.png')
+}
+
+const decodeFileWithScanner = async (scanner, file) => {
+  const results = await scanner.scanFileV2(file, false)
+  return results?.[0]?.decodedText || ''
+}
+
 export default function ScannerPage() {
   const navigate = useNavigate()
   const toast = useToast()
@@ -67,11 +143,17 @@ export default function ScannerPage() {
 
   const lookupAndNavigate = useCallback(
     async (code) => {
+      const normalized = String(code).trim()
       try {
-        const product = await db.products.get(code)
-        navigate(`/product/${code}${product ? '' : '?scan=1'}`)
+        let product = await db.products.get(normalized)
+        if (!product) {
+          product = await db.products
+            .filter((item) => Array.isArray(item.barcodes) && item.barcodes.includes(normalized))
+            .first()
+        }
+        navigate(`/product/${product ? product.barcode : normalized}${product ? '' : '?scan=1'}`)
       } catch {
-        navigate(`/product/${code}?scan=1`)
+        navigate(`/product/${normalized}?scan=1`)
       }
     },
     [navigate],
@@ -210,15 +292,31 @@ export default function ScannerPage() {
         if (!fileScannerRef.current) {
           fileScannerRef.current = new Html5Qrcode('scanner-file', false)
         }
-        const results = await fileScannerRef.current.scanFileV2(file, false)
-        const decodedText = results?.[0]?.decodedText
+        let decodedText = ''
+        try {
+          const prepared = await prepareImageFile(file)
+          decodedText = await decodeFileWithScanner(fileScannerRef.current, prepared)
+        } catch {
+          /* جرّب الطريقة البديلة بالأسفل */
+        }
+        if (!decodedText) {
+          try {
+            const zoomed = await prepareZoomedFile(file)
+            decodedText = await decodeFileWithScanner(fileScannerRef.current, zoomed)
+          } catch {
+            /* جرّب الطريقة البديلة بالأسفل */
+          }
+        }
         if (decodedText) {
           handleDecoded(decodedText)
         } else {
-          toast.error('لم نعثر على باركود واضح في هذه الصورة، جرّب صورة أوضح')
+          toast.error(
+            'لم يُقرأ الباركود من هذه الصورة. تأكد من وضوحه وأنه مضبوط بالكامل داخل الإطار ' +
+              'وبإضاءة جيدة، أو جرّب صورة أقرب وأوضح.',
+          )
         }
       } catch {
-        toast.error('تعذّرت قراءة الصورة، تأكد من وضوح الباركود أو استخدم الإدخال اليدوي')
+        toast.error('تعذّرت معالجة الصورة، تأكد من أنها صورة سليمة أو استخدم الإدخال اليدوي')
       } finally {
         setFileScanning(false)
       }
@@ -530,6 +628,7 @@ export default function ScannerPage() {
                   event.target.value = ''
                 }}
               />
+              <div id="scanner-file" className="hidden" aria-hidden="true" />
             </div>
 
             <div className="flex items-center gap-4" aria-hidden>

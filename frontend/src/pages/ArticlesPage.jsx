@@ -21,7 +21,7 @@ export default function ArticlesPage() {
 
   return (
     <section className="py-12 md:py-16">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="shell">
         <div className="flex items-center gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
             <FileTextIcon className="h-6 w-6" />
@@ -37,7 +37,7 @@ export default function ArticlesPage() {
         </div>
 
         {published.length > 0 ? (
-          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {published.map((article) => (
               <ArticleCard key={article.id} article={article} />
             ))}

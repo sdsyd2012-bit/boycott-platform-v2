@@ -6,8 +6,10 @@ venv/
 env/
 db.sqlite3
 staticfiles/
+media/*
+!media/product_images/
 .env
-.env.*
+.env.production
 !.env.example
 .DS_Store
 *.log

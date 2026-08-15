@@ -23,13 +23,13 @@ export default function Hero({ slides = HERO_SLIDES }) {
   return (
     <section
       id="home"
-      className="relative flex min-h-[520px] w-full items-center justify-center overflow-hidden bg-slate-950 sm:min-h-[640px]"
+      className="relative flex min-h-[520px] w-full items-center justify-center overflow-hidden bg-slate-100 sm:min-h-[640px] dark:bg-slate-950"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
       {/* Background Orbs & Ambient Glow */}
-      <div className="pointer-events-none absolute -top-40 right-1/4 h-96 w-96 rounded-full bg-emerald-600/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-40 left-1/4 h-96 w-96 rounded-full bg-teal-500/15 blur-3xl" />
+      <div className="pointer-events-none absolute -top-40 right-1/4 h-96 w-96 rounded-full bg-emerald-500/15 blur-3xl dark:bg-emerald-600/20" />
+      <div className="pointer-events-none absolute -bottom-40 left-1/4 h-96 w-96 rounded-full bg-teal-500/10 blur-3xl dark:bg-teal-500/15" />
 
       {/* Slide Images */}
       {slides.map((s, i) => (
@@ -49,7 +49,7 @@ export default function Hero({ slides = HERO_SLIDES }) {
               }`}
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/60 backdrop-blur-[2px]" />
+          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/85 to-white/60 dark:from-slate-950 dark:via-slate-950/80 dark:to-slate-950/60 dark:backdrop-blur-[2px]" />
         </div>
       ))}
 
@@ -59,20 +59,20 @@ export default function Hero({ slides = HERO_SLIDES }) {
         className="relative z-20 mx-auto w-full max-w-4xl px-4 py-20 text-center animate-[fade-up_0.6s_cubic-bezier(0.16,1,0.3,1)_both]"
       >
         {/* Glowing Badge */}
-        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5 backdrop-blur-md">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-xs font-bold tracking-wide text-emerald-300">
+        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 backdrop-blur-md">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse dark:bg-emerald-400" />
+          <span className="text-xs font-bold tracking-wide text-emerald-700 dark:text-emerald-300">
             {slide.tag}
           </span>
         </div>
 
         {/* Main Title */}
-        <h1 className="mt-6 text-[1.65rem] font-black leading-snug tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
+        <h1 className="mt-6 text-[1.65rem] font-black leading-snug tracking-tight text-slate-900 sm:text-4xl md:text-5xl lg:text-6xl dark:text-white">
           {slide.title}
         </h1>
 
         {/* Subtitle */}
-        <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-300 sm:mt-6 sm:text-lg">
+        <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mt-6 sm:text-lg dark:text-slate-300">
           {slide.sub}
         </p>
 
@@ -88,9 +88,9 @@ export default function Hero({ slides = HERO_SLIDES }) {
 
           <Link
             to="/scan"
-            className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/10 px-8 py-3.5 text-sm font-extrabold text-white backdrop-blur-md transition duration-300 hover:bg-white/20 hover:border-white/30 active:scale-95 sm:w-auto sm:px-8 sm:py-4"
+            className="group inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white/70 px-8 py-3.5 text-sm font-extrabold text-slate-800 shadow-sm backdrop-blur-md transition duration-300 hover:bg-white hover:border-slate-400 active:scale-95 sm:w-auto sm:px-8 sm:py-4 dark:border-white/20 dark:bg-white/10 dark:text-white dark:hover:bg-white/20 dark:hover:border-white/30"
           >
-            <ScanIcon className="h-4 w-4 text-emerald-400" />
+            <ScanIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             <span>الماسح الذكي</span>
           </Link>
         </div>
@@ -101,7 +101,7 @@ export default function Hero({ slides = HERO_SLIDES }) {
         type="button"
         onClick={prevSlide}
         aria-label="الشريحة السابقة"
-        className="absolute right-4 top-1/2 z-30 hidden -translate-y-1/2 rounded-full border border-white/10 bg-slate-950/40 p-3 text-white backdrop-blur-md transition hover:bg-white/20 sm:flex"
+        className="absolute right-4 top-1/2 z-30 hidden -translate-y-1/2 rounded-full border border-slate-300 bg-white/70 p-3 text-slate-700 shadow-sm backdrop-blur-md transition hover:bg-white sm:flex dark:border-white/10 dark:bg-slate-950/40 dark:text-white dark:hover:bg-white/20"
       >
         <ChevronRightIcon className="h-5 w-5" />
       </button>
@@ -110,7 +110,7 @@ export default function Hero({ slides = HERO_SLIDES }) {
         type="button"
         onClick={nextSlide}
         aria-label="الشريحة التالية"
-        className="absolute left-4 top-1/2 z-30 hidden -translate-y-1/2 rounded-full border border-white/10 bg-slate-950/40 p-3 text-white backdrop-blur-md transition hover:bg-white/20 sm:flex"
+        className="absolute left-4 top-1/2 z-30 hidden -translate-y-1/2 rounded-full border border-slate-300 bg-white/70 p-3 text-slate-700 shadow-sm backdrop-blur-md transition hover:bg-white sm:flex dark:border-white/10 dark:bg-slate-950/40 dark:text-white dark:hover:bg-white/20"
       >
         <ChevronLeftIcon className="h-5 w-5" />
       </button>
@@ -125,8 +125,8 @@ export default function Hero({ slides = HERO_SLIDES }) {
             aria-label={`الشريحة ${i + 1}`}
             className={`h-2 rounded-full transition-all duration-300 ${
               i === current
-                ? 'w-9 bg-emerald-400 shadow-md shadow-emerald-400/50'
-                : 'w-2 bg-white/30 hover:bg-white/60'
+                ? 'w-9 bg-emerald-500 shadow-md shadow-emerald-500/40 dark:bg-emerald-400 dark:shadow-emerald-400/50'
+                : 'w-2 bg-slate-400/40 hover:bg-slate-500/60 dark:bg-white/30 dark:hover:bg-white/60'
             }`}
           />
         ))}

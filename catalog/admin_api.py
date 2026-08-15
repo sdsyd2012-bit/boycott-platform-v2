@@ -6,6 +6,7 @@ from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .images import localize_image
 from .models import Article, Category, Product, ProductDiscovery, Video
 from .serializers import (
     ArticleSerializer,
@@ -97,6 +98,8 @@ class ApproveDiscoveryView(APIView):
     def post(self, request, pk):
         discovery = get_object_or_404(ProductDiscovery, pk=pk)
 
+        local_image = localize_image(discovery.image_url)
+
         product, created = Product.objects.update_or_create(
             barcode=discovery.barcode,
             defaults={
@@ -104,7 +107,7 @@ class ApproveDiscoveryView(APIView):
                 'brand_name': discovery.brand_name,
                 'category': discovery.category,
                 'is_boycotted': discovery.is_boycotted,
-                'image_url': discovery.image_url,
+                'image_url': local_image or discovery.image_url,
                 'reason': discovery.reason,
                 'description': discovery.reason,
                 'is_deleted': False,

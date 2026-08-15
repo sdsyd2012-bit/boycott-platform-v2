@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { BanIcon, CheckIcon, TagIcon } from './icons.jsx'
 import { shortDescription } from '../lib/brand.js'
+import { ProductImage } from './LocalImage.jsx'
 
 export const TONES = [
   'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
@@ -34,20 +35,16 @@ export default function BrandCard({ brand }) {
       to={`/product/${brand.id}`}
       className="group relative flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl dark:border-white/10 dark:bg-slate-900 dark:hover:border-white/20"
     >
-      {/* Top Banner Image Container */}
-      <div className="relative flex h-40 items-center justify-center overflow-hidden bg-slate-100 p-5 dark:bg-slate-800/80">
-        {brand.logo_url ? (
-          <img
-            src={brand.logo_url}
-            alt={brand.name}
-            loading="lazy"
-            className="max-h-24 w-auto max-w-[80%] object-contain transition-transform duration-500 group-hover:scale-110"
-          />
-        ) : (
-          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-200/80 text-slate-400 dark:bg-slate-700/60 dark:text-slate-500">
-            <TagIcon className="h-8 w-8" />
-          </span>
-        )}
+      {/* Top Banner Image Container — always white, tinted light red on hover only */}
+      <div className="relative flex h-40 items-center justify-center overflow-hidden bg-white p-5 transition-colors duration-300 group-hover:bg-rose-100 dark:group-hover:bg-rose-500/15">
+        <ProductImage
+          product={brand}
+          alt={brand.name}
+          imgClassName="max-h-24 w-auto max-w-[80%] object-contain transition-transform duration-500 group-hover:scale-110"
+          fallbackClassName="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-200/80 text-slate-400"
+        >
+          <TagIcon className="h-8 w-8" />
+        </ProductImage>
 
         {/* Category Pill Badge */}
         {categoryName && (
@@ -85,7 +82,7 @@ export default function BrandCard({ brand }) {
 
         <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-white/5">
           <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">
-            الباركود: <code className="font-mono text-slate-600 dark:text-slate-300">{brand.id}</code>
+            الباركود: <code className="font-mono text-slate-600 dark:text-slate-300">{brand.barcode_label}</code>
           </span>
           <span className="text-xs font-bold text-emerald-600 transition group-hover:translate-x-1 dark:text-emerald-400">
             التفاصيل ←

@@ -41,4 +41,21 @@ db.version(5).stores({
   sync_meta: 'id, last_sync_timestamp',
 })
 
+db.version(6).stores({
+  categories: 'id, name',
+  products: 'barcode, name, brand_name, category, updated_at, status, barcodes',
+  videos: 'id, title',
+  articles: 'id, slug, title, updated_at',
+  sync_meta: 'id, last_sync_timestamp',
+})
+
+db.version(7).stores({
+  categories: 'id, name',
+  products: 'barcode, name, brand_name, category, updated_at, status, barcodes',
+  videos: 'id, title',
+  articles: 'id, slug, title, updated_at',
+  sync_meta: 'id, last_sync_timestamp',
+  images: 'id, owner_id, source_url, status',
+})
+
 export default db

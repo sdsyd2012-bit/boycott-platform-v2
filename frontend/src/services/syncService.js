@@ -1,9 +1,8 @@
 import axios from 'axios'
 
+import { API_BASE_URL } from '../config/api.js'
 import { db } from '../db/database.js'
-
-const env = import.meta?.env ?? {}
-const API_BASE_URL = env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1'
+import { hydrateAllImages, reconcileLocalImages } from './imageService.js'
 const SYNC_ENDPOINT = `${API_BASE_URL}/sync/`
 const DISCOVERIES_ENDPOINT = `${API_BASE_URL}/discoveries/`
 
@@ -35,11 +34,6 @@ function setSyncState(nextState) {
   syncStateListeners.forEach((listener) => listener(syncState))
 }
 
-async function getLastSyncTimestamp() {
-  const row = await db.sync_meta.get(SYNC_META_KEY)
-  return row?.last_sync_timestamp || null
-}
-
 async function saveLastSyncTimestamp(timestamp) {
   await db.sync_meta.put({
     id: SYNC_META_KEY,
@@ -63,6 +57,7 @@ async function applyProducts(products) {
         reason: product.reason,
         description: product.description,
         alternatives: product.alternatives || [],
+        barcodes: product.barcodes || [],
         is_deleted: false,
         updated_at: product.updated_at,
         created_at: product.created_at,
@@ -150,6 +145,21 @@ async function applyVideos(videos) {
   })
 }
 
+async function reconcileProducts(serverProducts) {
+  const serverBarcodes = new Set(
+    serverProducts
+      .filter((product) => product.is_deleted !== true)
+      .map((product) => String(product.barcode)),
+  )
+  const local = await db.products.toArray()
+  const toDelete = local.filter(
+    (item) =>
+      !serverBarcodes.has(String(item.barcode)) &&
+      !(item.is_user_contributed && item.status === 'pending'),
+  )
+  await Promise.all(toDelete.map((item) => db.products.delete(item.barcode)))
+}
+
 async function applyCategories(categories) {
   await db.transaction('rw', db.categories, async () => {
     for (const category of categories) {
@@ -186,6 +196,28 @@ async function applyArticles(articles) {
   })
 }
 
+export async function resetLocalDatabase() {
+  await db.transaction(
+    'rw',
+    db.products,
+    db.categories,
+    db.videos,
+    db.articles,
+    db.sync_meta,
+    db.images,
+    async () => {
+      await Promise.all([
+        db.products.clear(),
+        db.categories.clear(),
+        db.videos.clear(),
+        db.articles.clear(),
+        db.sync_meta.clear(),
+        db.images.clear(),
+      ])
+    },
+  )
+}
+
 export async function syncNow() {
   if (syncState === SYNC_STATE.syncing) {
     return { ok: false, synced: false, reason: 'already-syncing' }
@@ -193,15 +225,21 @@ export async function syncNow() {
 
   setSyncState(SYNC_STATE.syncing)
 
-  const since = await getLastSyncTimestamp()
-
   try {
-    const response = await axios.get(SYNC_ENDPOINT, {
-      params: since ? { since } : undefined,
-      timeout: 15000,
-    })
+    const response = await axios.get(SYNC_ENDPOINT, { timeout: 15000 })
 
     const data = response.data
+
+    // مزامنة كاملة دائماً: تصفير البيانات المحلية ثم إعادة بنائها من الخادم،
+    // حتى تختفي أي بيانات قديمة لم تعد موجودة لدى الخادم (يظهر فقط ما في الخادم).
+    await db.transaction('rw', db.products, db.categories, db.videos, db.articles, async () => {
+      await Promise.all([
+        db.categories.clear(),
+        db.videos.clear(),
+        db.articles.clear(),
+        reconcileProducts(data.products || []),
+      ])
+    })
 
     await Promise.all([
       applyCategories(data.categories || []),
@@ -215,6 +253,14 @@ export async function syncNow() {
     }
 
     await pushDiscoveries()
+
+    await reconcileLocalImages()
+    // تنزيل خلفي للصور ذات الروابط الخارجية فقط (إن وُجدت) ثم تخزينها محلياً.
+    hydrateAllImages({
+      products: data.products || [],
+      videos: data.videos || [],
+      articles: data.articles || [],
+    }).catch(() => {})
 
     setSyncState(SYNC_STATE.success)
     return { ok: true, synced: true, serverTime: data.server_time }

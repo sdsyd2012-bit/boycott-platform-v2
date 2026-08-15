@@ -10,6 +10,7 @@ import {
   SearchIcon,
   StoreIcon,
   TriangleAlertIcon,
+  CloseIcon,
 } from '../components/icons.jsx'
 
 const ITEMS_PER_PAGE = 30
@@ -54,11 +55,14 @@ export default function ProductsPage() {
     return brands
       .filter((brand) => {
         const categoryName = brand.categories[0] || ''
+        const barcodesToMatch = [brand.barcode, ...(brand.barcodes || [])]
+          .map((code) => String(code).toLowerCase())
         const matchesSearch =
           !query ||
           brand.name.toLowerCase().includes(query) ||
           brand.description.toLowerCase().includes(query) ||
-          categoryName.toLowerCase().includes(query)
+          categoryName.toLowerCase().includes(query) ||
+          barcodesToMatch.some((code) => code.includes(query))
         const matchesType =
           selectedType === 'all' ||
           (selectedType === 'stores' ? isStoreCategory(categoryName) : !isStoreCategory(categoryName))
@@ -86,14 +90,14 @@ export default function ProductsPage() {
     const base = 'inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition'
     return selectedType === key
       ? `${base} bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20`
-      : `${base} border border-white/15 text-slate-300 hover:border-white/30 hover:bg-white/5 hover:text-white`
+      : `${base} border border-slate-300 text-slate-600 hover:border-emerald-400 hover:bg-emerald-500/5 hover:text-emerald-700 dark:border-white/15 dark:text-slate-300 dark:hover:border-white/30 dark:hover:bg-white/5 dark:hover:text-white`
   }
 
   const categoryChipClass = (key) => {
     const base = 'inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition'
     return selectedCategory === key
       ? `${base} bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20`
-      : `${base} border border-white/15 text-slate-300 hover:border-white/30 hover:bg-white/5 hover:text-white`
+      : `${base} border border-slate-300 text-slate-600 hover:border-emerald-400 hover:bg-emerald-500/5 hover:text-emerald-700 dark:border-white/15 dark:text-slate-300 dark:hover:border-white/30 dark:hover:bg-white/5 dark:hover:text-white`
   }
 
   if (!products || !categories) {
@@ -107,33 +111,61 @@ export default function ProductsPage() {
   }
 
   return (
-    <section className="py-6 md:py-20">
-      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl border border-slate-800 bg-slate-900 p-4 shadow-sm md:p-8 dark:border-white/10 dark:bg-slate-900/70">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h1 className="text-2xl font-bold tracking-tight text-white md:text-3xl">
-              قائمة المقاطعة
-            </h1>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/50 bg-emerald-400/10 px-3.5 py-1.5 text-xs font-bold text-emerald-300">
+    <section>
+      {/* Full-width filter band */}
+      <div className="relative overflow-hidden border-y border-slate-200/80 bg-gradient-to-br from-white via-slate-50 to-emerald-50/50 dark:border-white/10 dark:from-slate-950 dark:via-slate-950 dark:to-emerald-950">
+        {/* Decorative glow accents */}
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl dark:bg-emerald-500/15" />
+          <div className="absolute -right-16 -bottom-32 h-80 w-80 rounded-full bg-teal-500/10 blur-3xl dark:bg-teal-500/10" />
+          <div className="absolute left-1/3 top-0 h-px w-44 bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent dark:via-emerald-400/60" />
+        </div>
+
+        <div className="shell relative py-10 md:py-14">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-400">
+                دليل المقاطعة الموثّق
+              </p>
+              <h1 className="mt-1.5 text-3xl font-black tracking-tight text-slate-900 dark:text-white md:text-4xl">
+                قائمة المقاطعة
+              </h1>
+            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-4 py-1.5 text-xs font-bold text-emerald-700 dark:border-emerald-400/50 dark:bg-emerald-400/10 dark:text-emerald-300">
               {filtered.length} عنصر
             </span>
           </div>
 
-          <div className="relative mt-6">
-            <SearchIcon className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value)
+          {/* Search */}
+          <div className="relative mt-7">
+            <SearchIcon className="pointer-events-none absolute right-5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value)
+                resetPage()
+              }}
+              placeholder="ابحث عن منتج أو محل أو باركود…"
+              className="w-full rounded-full border border-slate-300 bg-white py-4 ps-14 pe-12 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none dark:border-white/15 dark:bg-white/5 dark:text-white dark:shadow-inner dark:placeholder:text-slate-400 dark:focus:border-emerald-400/60 dark:focus:bg-white/10 dark:focus:ring-emerald-400/20"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('')
                   resetPage()
                 }}
-                placeholder="البحث عن منتجات أو محلات"
-              className="w-full rounded-xl border border-white/10 bg-slate-950/60 py-3.5 ps-4 pe-11 text-sm text-white placeholder:text-slate-500 focus:border-emerald-400/60 focus:outline-none focus:ring-2 focus:ring-emerald-400/20"
-            />
+                aria-label="مسح البحث"
+                className="absolute left-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-white/10 dark:hover:text-white"
+              >
+                <CloseIcon className="h-4 w-4" />
+              </button>
+            )}
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center gap-2">
+          {/* Type filters */}
+          <div className="mt-6 flex flex-wrap items-center gap-2">
             {TYPE_FILTERS.map((filter) => {
               const Icon = filter.icon
               return (
@@ -153,6 +185,7 @@ export default function ProductsPage() {
             })}
           </div>
 
+          {/* Category filters */}
           <div className="no-scrollbar mt-3 flex items-center gap-2 overflow-x-auto pb-1">
             <button
               type="button"
@@ -180,8 +213,10 @@ export default function ProductsPage() {
             ))}
           </div>
         </div>
+      </div>
 
-        <div className="mt-6 flex items-start gap-3 rounded-2xl border border-amber-400/25 bg-amber-400/10 px-5 py-4">
+      <div className="shell pb-20 pt-8 md:pt-10">
+        <div className="flex items-start gap-3 rounded-2xl border border-amber-400/25 bg-amber-400/10 px-5 py-4">
           <TriangleAlertIcon className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
           <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-200 md:text-sm">
             <span className="font-bold">تنويه:</span> هذه القائمة تحتوي أشهر المنتجات والمحلات
@@ -191,7 +226,7 @@ export default function ProductsPage() {
         </div>
 
         {filtered.length > 0 ? (
-          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5">
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
             {pageItems.map((brand) => (
               <BrandCard key={brand.id} brand={brand} />
             ))}
