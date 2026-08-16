@@ -1,37 +1,45 @@
+import os
+
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
-
-DEFAULTS = {
-    'username': 'admin',
-    'email': 'admin@localhost',
-    'password': 'admin123',
-}
 
 
 class Command(BaseCommand):
     help = (
-        'إنشاء مدير (superuser) محلي بسرعة للتجربة. '
-        'الافتراضي: admin / admin123 — استخدم الوسائط لتغييرها.'
+        'إنشاء superuser إن لم يكن موجوداً فقط. بيانات الحساب تُقرأ من متغيرات '
+        'البيئة DJANGO_ADMIN_USERNAME / DJANGO_ADMIN_EMAIL / DJANGO_ADMIN_PASSWORD. '
+        'لا يُحذف أي مستخدم ولا تُستبدل كلمة مرور مستخدم موجود أبداً.'
     )
 
     def add_arguments(self, parser):
-        parser.add_argument('--username', default=None, help='اسم المستخدم (الافتراضي: admin)')
-        parser.add_argument('--email', default=None, help='البريد الإلكتروني')
-        parser.add_argument('--password', default=None, help='كلمة المرور (الافتراضي: admin123)')
+        parser.add_argument('--username', default=None, help='اسم المستخدم (يتجاوز DJANGO_ADMIN_USERNAME)')
+        parser.add_argument('--email', default=None, help='البريد الإلكتروني (يتجاوز DJANGO_ADMIN_EMAIL)')
+        parser.add_argument('--password', default=None, help='كلمة المرور (يتجاوز DJANGO_ADMIN_PASSWORD)')
 
     def handle(self, *args, **options):
         User = get_user_model()
-        username = options['username'] or DEFAULTS['username']
-        email = options['email'] or DEFAULTS['email']
-        password = options['password'] or DEFAULTS['password']
+        username = (options['username'] or os.environ.get('DJANGO_ADMIN_USERNAME') or 'admin').strip()
+        email = (options['email'] or os.environ.get('DJANGO_ADMIN_EMAIL') or 'admin@example.com').strip()
+        password = options['password'] or os.environ.get('DJANGO_ADMIN_PASSWORD') or ''
 
         if User.objects.filter(username=username).exists():
             self.stdout.write(
-                self.style.WARNING(f'المدير «{username}» موجود مسبقاً — لم يتم تغيير شيء.')
+                self.style.WARNING(
+                    f'المستخدم "{username}" موجود مسبقاً — لم يتم تغيير أي شيء.'
+                )
             )
             return
 
+        if not password:
+            self.stderr.write(
+                self.style.ERROR(
+                    'لا يمكن إنشاء مستخدم جديد بدون كلمة مرور. '
+                    'اضبط DJANGO_ADMIN_PASSWORD في متغيرات البيئة.'
+                )
+            )
+            raise SystemExit(1)
+
         User.objects.create_superuser(username=username, email=email, password=password)
         self.stdout.write(
-            self.style.SUCCESS(f'تم إنشاء المدير المحلي: {username} / {password}')
+            self.style.SUCCESS(f'تم إنشاء حساب الأدمن "{username}" ({email}).')
         )

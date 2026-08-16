@@ -1,11 +1,25 @@
 # Render Blueprint — النشر على الاستضافة المجانية.
 #
-# قبل النشر عدّل القيم بين <...>:
-#   <API_HOST>       = نطاق الـ Backend النهائي (مثل: boycott-api.onrender.com)
-#   <FRONTEND_URL>   = نطاق الـ Frontend النهائي (مثل: https://boycott-app.onrender.com)
+# هيكل النشر:
+#   React Frontend (static) -> Django API (web) -> PostgreSQL
+#
+# ملاحظة مهمة حول القيم النهائية:
+# القيم أدناه مبنية على اسمي الخدمتين الفعليين على Render
+# (boycott-api.onrender.com / boycott-frontend.onrender.com).
+# قبل النشر، افتح الخدمتين في لوحة Render وتحقق من الرابط الفعلي،
+# وإن اختلف النطاق عدّل القيم الثلاث التالية فقط:
+#   - VITE_API_BASE_URL         (خدمة boycott-frontend)
+#   - DJANGO_ALLOWED_HOSTS      (خدمة boycott-api)
+#   - DJANGO_CORS_ORIGINS       (خدمة boycott-api)
+#
+# إعداد Build:
+#   build.sh هو المسؤول الوحيد عن خطوات البناء والتهيئة:
+#   pip install -> migrate -> (استيراد البيانات مرة واحدة فقط) -> init_admin
+#   -> collectstatic -> ensure_media.
+#   لذلك لا يوجد preDeployCommand حتى لا تتكرر migrations/loaddata.
 #
 # مهمة جداً بعد النشر (خطوة واحدة يدوياً):
-#   - افتح إعدادات خدمة boycott-frontend على لوحة Render → Redirects/Rewrites
+#   - افتح إعدادات خدمة boycott-frontend على لوحة Render -> Redirects/Rewrites
 #     وأضف قاعدة Rewrite: المصدر /* إلى /index.html
 #     حتى تعمل روابط React Router عند فتح/تحديث أي صفحة مباشرة (مثل /product/...).
 #     (ملف frontend/_redirects و frontend/vercel.json يغطيان Netlify/Cloudflare/Vercel.)
@@ -30,8 +44,7 @@ services:
       --workers 2 --threads 4
       --bind 0.0.0.0:$PORT
       --timeout 60 --access-logfile -
-    preDeployCommand: "python manage.py migrate --noinput"
-    healthCheckPath: /api/v1/sync/
+    healthCheckPath: /health/
     envVars:
       - key: PYTHON_VERSION
         value: "3.13.12"
@@ -40,9 +53,11 @@ services:
       - key: DJANGO_DEBUG
         value: "False"
       - key: DJANGO_ALLOWED_HOSTS
-        value: "<API_HOST>"
+        value: "boycott-api.onrender.com"
       - key: DJANGO_CORS_ORIGINS
-        value: "<FRONTEND_URL>"
+        value: "https://boycott-frontend.onrender.com"
+      - key: DJANGO_SSL_REDIRECT
+        value: "False"
       - key: DATABASE_URL
         fromDatabase:
           name: boycott-db
@@ -57,4 +72,4 @@ services:
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: "https://<API_HOST>/api/v1"
+        value: "https://boycott-api.onrender.com/api/v1"
