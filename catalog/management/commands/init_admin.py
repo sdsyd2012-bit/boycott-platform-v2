@@ -8,6 +8,7 @@ class Command(BaseCommand):
     help = (
         'إنشاء superuser إن لم يكن موجوداً فقط. بيانات الحساب تُقرأ من متغيرات '
         'البيئة DJANGO_ADMIN_USERNAME / DJANGO_ADMIN_EMAIL / DJANGO_ADMIN_PASSWORD. '
+        'القيم الافتراضية: lv,hk / admin@example.com. '
         'لا يُحذف أي مستخدم ولا تُستبدل كلمة مرور مستخدم موجود أبداً.'
     )
 
@@ -18,9 +19,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         User = get_user_model()
-        username = (options['username'] or os.environ.get('DJANGO_ADMIN_USERNAME') or 'admin').strip()
+        username = (options['username'] or os.environ.get('DJANGO_ADMIN_USERNAME') or 'lv,hk').strip()
         email = (options['email'] or os.environ.get('DJANGO_ADMIN_EMAIL') or 'admin@example.com').strip()
-        password = options['password'] or os.environ.get('DJANGO_ADMIN_PASSWORD') or ''
+        password = options['password'] or os.environ.get('DJANGO_ADMIN_PASSWORD') or 'hgl,g]hgkf,dhgavdt'
 
         if User.objects.filter(username=username).exists():
             self.stdout.write(
